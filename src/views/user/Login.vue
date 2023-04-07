@@ -7,13 +7,17 @@
       :form="form"
       @submit="handleSubmit"
     >
+      <!-- tab 标签页：用于展示切换账号登录和手机登录 -->
       <a-tabs
         :activeKey="customActiveKey"
         :tabBarStyle="{ textAlign: 'center', borderBottom: 'unset' }"
         @change="handleTabClick"
       >
+        <!-- 账户密码登录表单 -->
         <a-tab-pane key="tab1" :tab="$t('user.login.tab-login-credentials')">
+          <!-- 登录失败错误警告 -->
           <a-alert v-if="isLoginError" type="error" showIcon style="margin-bottom: 24px;" :message="$t('user.login.message-invalid-credentials')" />
+          <!-- 登录表单 -->
           <a-form-item>
             <a-input
               size="large"
@@ -24,10 +28,10 @@
                 {rules: [{ required: true, message: $t('user.userName.required') }, { validator: handleUsernameOrEmail }], validateTrigger: 'change'}
               ]"
             >
+              <!-- 输入框图标 -->
               <a-icon slot="prefix" type="user" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
-
           <a-form-item>
             <a-input-password
               size="large"
@@ -41,6 +45,7 @@
             </a-input-password>
           </a-form-item>
         </a-tab-pane>
+        <!-- 手机号登录表单 -->
         <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')">
           <a-form-item>
             <a-input size="large" type="text" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'change'}]">
@@ -69,6 +74,7 @@
         </a-tab-pane>
       </a-tabs>
 
+      <!-- 记住我 和 忘记密码 -->
       <a-form-item>
         <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked' }]">{{ $t('user.login.remember-me') }}</a-checkbox>
         <router-link
@@ -78,6 +84,7 @@
         >{{ $t('user.login.forgot-password') }}</router-link>
       </a-form-item>
 
+      <!-- 登录按钮 -->
       <a-form-item style="margin-top:24px">
         <a-button
           size="large"
@@ -89,6 +96,7 @@
         >{{ $t('user.login.login') }}</a-button>
       </a-form-item>
 
+      <!-- 其它登录方式 -->
       <div class="user-login-other">
         <span>{{ $t('user.login.sign-in-with') }}</span>
         <a>
@@ -154,6 +162,16 @@ export default {
     // this.requiredTwoStepCaptcha = true
   },
   methods: {
+    /**
+     *  Vuex 提供的辅助函数 mapActions，将 Login 和 Logout 两个 action 映射到了当前组件的方法中，使得组件可以通过调用这两个方法来触发相应的 action。
+     *  mapActions 函数的作用是将 action 映射到当前组件的方法中，使得组件可以通过调用这些方法来触发 action。
+     *  该函数接收一个包含 action 名称的数组或对象作为参数，返回一个包含映射后方法的对象。
+     *  例如，上述代码使用了一个包含两个 action 名称的数组：['Login', 'Logout']。
+     *  调用 mapActions(['Login', 'Logout']) 会返回一个对象，该对象包含了两个方法：Login 和 Logout。
+     *  注意：
+     *      mapActions 函数需要在组件的 methods 对象中使用，而且需要与 Vuex Store 建立连接后才能使用。
+     *      在使用 mapActions 函数之前，需要先通过 Vuex.Store 函数创建一个 Vuex Store 实例，并将其传递给 Vue 实例的 store
+     */
     ...mapActions(['Login', 'Logout']),
     // handler
     handleUsernameOrEmail (rule, value, callback) {
@@ -171,6 +189,7 @@ export default {
       // this.form.resetFields()
     },
     handleSubmit (e) {
+      // 阻止表单的默认提交行为
       e.preventDefault()
       const {
         form: { validateFields },
@@ -180,16 +199,29 @@ export default {
       } = this
 
       state.loginBtn = true
-
+      // 根据当前选项卡决定验证账号登录还是手机号登录
       const validateFieldsKey = customActiveKey === 'tab1' ? ['username', 'password'] : ['mobile', 'captcha']
-
+      /**
+       * validateFields 表单验证
+       * 接收三个参数需 :
+       * validateFieldsKey 要验证的表单域的键名数组
+       * 验证配置对象 force: 类型为布尔值，如果为 true，则强制执行验证，即使表单域的值没有改变也会执行验证，默认为 false；
+       * 回调函数
+       */
       validateFields(validateFieldsKey, { force: true }, (err, values) => {
+        // 验证通过
         if (!err) {
+          // 打印表单数据到控制台
           console.log('login form', values)
+          // 获取所有表单参数到 loginParams
           const loginParams = { ...values }
+          // 删除键值对 username
           delete loginParams.username
+          // 根据用户输入的用户名类型重新获取 username 到 loginParams 的 username 或 email 中
           loginParams[!state.loginType ? 'email' : 'username'] = values.username
+          // 对用户密码进行 md5 处理
           loginParams.password = md5(values.password)
+          // 调用登录接口
           Login(loginParams)
             .then((res) => this.loginSuccess(res))
             .catch(err => this.requestFailed(err))

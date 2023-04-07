@@ -10,12 +10,12 @@
           <div class="header">
             <a href="/">
               <img src="~@/assets/logo.svg" class="logo" alt="logo">
-              <span class="title">Ant Design</span>
+              <span class="title">Copilot</span>
             </a>
           </div>
-          <div class="desc">
+          <!-- <div class="desc">
             {{ $t('layouts.userLayout.title') }}
-          </div>
+          </div> -->
         </div>
 
         <router-view />
